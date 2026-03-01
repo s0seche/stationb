@@ -1,0 +1,11 @@
+node_modules/
+venv/
+logs/
+quarantine/
+config/.env
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+Thumbs.db
+

@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Station Blanche</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;700&display=swap');
+
+  :root {
+    --bg: #080c18;
+    --bg2: #0d1322;
+    --bg3: #121828;
+    --border: #1e2d4a;
+    --accent: #00c8ff;
+    --accent2: #0084ff;
+    --danger: #ff3a3a;
+    --warn: #ffaa00;
+    --ok: #00e676;
+    --text: #c8d8f0;
+    --text2: #5a7a9a;
+    --mono: 'Share Tech Mono', monospace;
+    --sans: 'Exo 2', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    height: 100vh;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* ── Titlebar ───────────────────────────────── */
+  #titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 40px;
+    padding: 0 16px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    -webkit-app-region: drag;
+    flex-shrink: 0;
+  }
+  #titlebar .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  #titlebar .logo-icon {
+    width: 22px; height: 22px;
+    background: var(--accent);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: var(--bg); font-weight: 900;
+  }
+  .win-controls {
+    display: flex; gap: 8px;
+    -webkit-app-region: no-drag;
+  }
+  .win-btn {
+    width: 28px; height: 28px; border: none; border-radius: 6px;
+    cursor: pointer; font-size: 14px; display: flex; align-items: center;
+    justify-content: center; transition: all .15s;
+    background: transparent; color: var(--text2);
+  }
+  .win-btn:hover { background: var(--border); color: var(--text); }
+  .win-btn.close:hover { background: var(--danger); color: white; }
+
+  /* ── Layout ─────────────────────────────────── */
+  #app {
+    display: flex;
+    height: calc(100vh - 40px);
+  }
+
+  /* ── Sidebar ────────────────────────────────── */
+  #sidebar {
+    width: 220px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 20px 0;
+    flex-shrink: 0;
+  }
+  .nav-section {
+    padding: 0 16px 8px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--text2);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: all .15s;
+    font-size: 13px;
+    color: var(--text2);
+  }
+  .nav-item:hover { background: rgba(0,200,255,.05); color: var(--text); }
+  .nav-item.active {
+    background: rgba(0,200,255,.08);
+    border-left-color: var(--accent);
+    color: var(--accent);
+  }
+  .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+  .sidebar-bottom {
+    margin-top: auto;
+    padding: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .status-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--ok);
+    animation: pulse 2s infinite;
+    margin-right: 6px;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .3; }
+  }
+  .status-label { font-size: 11px; color: var(--text2); }
+
+  /* ── Main content ───────────────────────────── */
+  #main {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .view { display: none; height: 100%; flex-direction: column; padding: 28px; overflow-y: auto; }
+  .view.active { display: flex; }
+
+  .view-header {
+    margin-bottom: 24px;
+  }
+  .view-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: 1px;
+  }
+  .view-sub {
+    font-size: 12px;
+    color: var(--text2);
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+
+  /* ── Cards ──────────────────────────────────── */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .card-title {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text2);
+    margin-bottom: 16px;
+  }
+
+  /* ── Scan View ──────────────────────────────── */
+  .folder-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    align-items: center;
+  }
+  #folder-display {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #folder-display.empty { color: var(--text2); }
+
+  .btn {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    transition: all .15s;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .btn-ghost {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    color: #000;
+    font-weight: 700;
+  }
+  .btn-primary:hover { filter: brightness(1.15); transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+  .btn-danger {
+    background: rgba(255,58,58,.1);
+    border: 1px solid rgba(255,58,58,.3);
+    color: var(--danger);
+  }
+  .btn-danger:hover { background: rgba(255,58,58,.2); }
+
+  .scan-types {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .scan-type-btn {
+    flex: 1;
+    padding: 14px;
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: center;
+    transition: all .2s;
+    color: var(--text2);
+  }
+  .scan-type-btn:hover { border-color: var(--accent); color: var(--text); }
+  .scan-type-btn.selected {
+    border-color: var(--accent);
+    background: rgba(0,200,255,.07);
+    color: var(--accent);
+  }
+  .scan-type-btn .type-icon { font-size: 22px; display: block; margin-bottom: 6px; }
+  .scan-type-btn .type-name { font-size: 13px; font-weight: 600; }
+  .scan-type-btn .type-desc { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+  /* ── Terminal ───────────────────────────────── */
+  #terminal {
+    background: #030507;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    height: 280px;
+    overflow-y: auto;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.7;
+    flex-shrink: 0;
+  }
+  #terminal .line { display: block; }
+  #terminal .line.info { color: #4a9eff; }
+  #terminal .line.ok { color: var(--ok); }
+  #terminal .line.danger { color: var(--danger); }
+  #terminal .line.warn { color: var(--warn); }
+  #terminal .line.default { color: #7a9ab8; }
+  #terminal .cursor {
+    display: inline-block;
+    width: 8px; height: 14px;
+    background: var(--accent);
+    animation: blink .8s step-end infinite;
+    vertical-align: text-bottom;
+    margin-left: 2px;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* ── Progress ───────────────────────────────── */
+  .progress-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 16px 0 8px;
+    overflow: hidden;
+    display: none;
+  }
+  .progress-bar.active { display: block; }
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    border-radius: 2px;
+    transition: width .3s;
+    animation: indeterminate 1.5s infinite ease-in-out;
+  }
+  @keyframes indeterminate {
+    0% { width: 0%; margin-left: 0; }
+    50% { width: 60%; margin-left: 20%; }
+    100% { width: 0%; margin-left: 100%; }
+  }
+
+  /* ── Result banner ──────────────────────────── */
+  #result-banner {
+    display: none;
+    padding: 14px 20px;
+    border-radius: 10px;
+    margin-top: 16px;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 1px;
+    align-items: center;
+    gap: 12px;
+  }
+  #result-banner.clean {
+    display: flex;
+    background: rgba(0,230,118,.08);
+    border: 1px solid rgba(0,230,118,.3);
+    color: var(--ok);
+  }
+  #result-banner.infected {
+    display: flex;
+    background: rgba(255,58,58,.08);
+    border: 1px solid rgba(255,58,58,.3);
+    color: var(--danger);
+  }
+  #result-banner.error {
+    display: flex;
+    background: rgba(255,170,0,.08);
+    border: 1px solid rgba(255,170,0,.3);
+    color: var(--warn);
+  }
+
+  /* ── Logs View ──────────────────────────────── */
+  .log-list { display: flex; flex-direction: column; gap: 8px; }
+  .log-item {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: all .15s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .log-item:hover { border-color: var(--accent); }
+  .log-item .log-icon { font-size: 18px; }
+  .log-item .log-name { font-family: var(--mono); font-size: 12px; color: var(--text); flex: 1; }
+  .log-item .log-date { font-size: 11px; color: var(--text2); }
+  #log-content {
+    background: #030507;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    flex: 1;
+    overflow-y: auto;
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.8;
+    color: #7a9ab8;
+    white-space: pre-wrap;
+    margin-top: 16px;
+  }
+
+  /* ── Quarantine View ────────────────────────── */
+  .quarantine-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+  }
+  .quarantine-item {
+    background: rgba(255,58,58,.04);
+    border: 1px solid rgba(255,58,58,.2);
+    border-radius: 8px;
+    padding: 14px;
+    transition: all .15s;
+  }
+  .quarantine-item:hover { border-color: var(--danger); }
+  .quarantine-item .q-icon { font-size: 24px; margin-bottom: 8px; }
+  .quarantine-item .q-name { font-size: 12px; font-family: var(--mono); color: var(--text); word-break: break-all; }
+  .quarantine-item .q-meta { font-size: 10px; color: var(--text2); margin-top: 4px; }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px;
+    color: var(--text2);
+    font-size: 13px;
+  }
+  .empty-state .empty-icon { font-size: 40px; display: block; margin-bottom: 12px; }
+
+  /* ── Stats (dashboard) ──────────────────────── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .stat-card.accent::before { background: var(--accent); }
+  .stat-card.ok::before { background: var(--ok); }
+  .stat-card.danger::before { background: var(--danger); }
+  .stat-value { font-size: 32px; font-weight: 700; color: white; font-family: var(--mono); }
+  .stat-label { font-size: 11px; color: var(--text2); letter-spacing: 1px; text-transform: uppercase; margin-top: 4px; }
+
+  /* ── Scrollbar ──────────────────────────────── */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text2); }
+
+  /* ── Scan in progress overlay ───────────────── */
+  #scanning-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(8,12,24,.85);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 20px;
+  }
+  #scanning-overlay.active { display: flex; }
+  .scan-spinner {
+    width: 80px; height: 80px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .scan-label { font-size: 18px; font-weight: 600; color: var(--accent); letter-spacing: 2px; }
+  .scan-sub { font-size: 12px; color: var(--text2); }
+</style>
+</head>
+<body>
+
+<!-- Titlebar -->
+<div id="titlebar">
+  <div class="logo">
+    <div class="logo-icon">S</div>
+    STATION BLANCHE
+  </div>
+  <div class="win-controls">
+    <button class="win-btn" onclick="window.api.windowMinimize()">─</button>
+    <button class="win-btn" onclick="window.api.windowMaximize()">□</button>
+    <button class="win-btn close" onclick="window.api.windowClose()">✕</button>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app">
+  <!-- Sidebar -->
+  <nav id="sidebar">
+    <div class="nav-section">Navigation</div>
+    <div class="nav-item active" data-view="scan">
+      <span class="nav-icon">🔍</span> Nouveau scan
+    </div>
+    <div class="nav-item" data-view="logs">
+      <span class="nav-icon">📋</span> Historique
+    </div>
+    <div class="nav-item" data-view="quarantine">
+      <span class="nav-icon">🔒</span> Quarantaine
+    </div>
+
+    <div class="sidebar-bottom">
+      <span class="status-dot"></span>
+      <span class="status-label">Système opérationnel</span>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main id="main">
+
+    <!-- ── Vue Scan ── -->
+    <div class="view active" id="view-scan">
+      <div class="view-header">
+        <div class="view-title">Analyse de fichiers</div>
+        <div class="view-sub">SÉLECTIONNEZ UN DOSSIER ET UN TYPE DE SCAN</div>
+      </div>
+
+      <!-- Sélection dossier -->
+      <div class="card">
+        <div class="card-title">📁 Dossier cible</div>
+        <div class="folder-row">
+          <div id="folder-display" class="empty">Aucun dossier sélectionné...</div>
+          <button class="btn btn-ghost" onclick="selectFolder()">📂 Parcourir</button>
+        </div>
+
+        <!-- Types de scan -->
+        <div class="card-title">⚙️ Type de scan</div>
+        <div class="scan-types">
+          <div class="scan-type-btn selected" data-type="all" onclick="selectType(this)">
+            <span class="type-icon">🛡️</span>
+            <div class="type-name">Scan complet</div>
+            <div class="type-desc">ClamAV + VirusTotal</div>
+          </div>
+          <div class="scan-type-btn" data-type="clam" onclick="selectType(this)">
+            <span class="type-icon">🐚</span>
+            <div class="type-name">ClamAV</div>
+            <div class="type-desc">Antivirus local</div>
+          </div>
+          <div class="scan-type-btn" data-type="VT" onclick="selectType(this)">
+            <span class="type-icon">🌐</span>
+            <div class="type-name">VirusTotal</div>
+            <div class="type-desc">Analyse cloud</div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="btn-scan" onclick="startScan()" style="width:100%">
+          ▶ &nbsp;Lancer l'analyse
+        </button>
+      </div>
+
+      <!-- Terminal output -->
+      <div class="card" style="flex:1; display:flex; flex-direction:column; min-height:0;">
+        <div class="card-title" style="display:flex; justify-content:space-between;">
+          <span>🖥️ Sortie console</span>
+          <button class="btn btn-ghost" style="padding:4px 10px; font-size:11px;" onclick="clearTerminal()">Effacer</button>
+        </div>
+        <div id="terminal">
+          <span class="line default">Station Blanche prête. Sélectionnez un dossier et lancez l'analyse.</span><br>
+          <span class="cursor"></span>
+        </div>
+        <div class="progress-bar" id="progress-bar"><div class="progress-fill"></div></div>
+        <div id="result-banner"></div>
+      </div>
+    </div>
+
+    <!-- ── Vue Logs ── -->
+    <div class="view" id="view-logs">
+      <div class="view-header">
+        <div class="view-title">Historique des scans</div>
+        <div class="view-sub">10 DERNIERS RAPPORTS</div>
+      </div>
+      <div class="card">
+        <div class="card-title">📋 Fichiers de log</div>
+        <div class="log-list" id="log-list">
+          <div class="empty-state"><span class="empty-icon">📭</span>Aucun log disponible</div>
+        </div>
+      </div>
+      <div id="log-content" style="display:none;"></div>
+    </div>
+
+    <!-- ── Vue Quarantaine ── -->
+    <div class="view" id="view-quarantine">
+      <div class="view-header">
+        <div class="view-title">Quarantaine</div>
+        <div class="view-sub">FICHIERS INFECTÉS ISOLÉS</div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="display:flex; justify-content:space-between;">
+          <span>🔒 Fichiers en quarantaine</span>
+          <button class="btn btn-ghost" style="padding:4px 10px; font-size:11px;" onclick="loadQuarantine()">🔄 Rafraîchir</button>
+        </div>
+        <div class="quarantine-grid" id="quarantine-grid">
+          <div class="empty-state" style="grid-column:1/-1"><span class="empty-icon">✅</span>Quarantaine vide</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Overlay scan en cours -->
+<div id="scanning-overlay">
+  <div class="scan-spinner"></div>
+  <div class="scan-label">ANALYSE EN COURS</div>
+  <div class="scan-sub" id="overlay-sub">Initialisation...</div>
+</div>
+
+<script>
+let selectedFolder = null;
+let selectedType = 'all';
+let isScanning = false;
+
+// ── Navigation ────────────────────────────────────────────────
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    item.classList.add('active');
+    const viewId = 'view-' + item.dataset.view;
+    document.getElementById(viewId).classList.add('active');
+    if (item.dataset.view === 'logs') loadLogs();
+    if (item.dataset.view === 'quarantine') loadQuarantine();
+  });
+});
+
+// ── Sélection dossier ─────────────────────────────────────────
+async function selectFolder() {
+  const folder = await window.api.selectFolder();
+  if (folder) {
+    selectedFolder = folder;
+    const el = document.getElementById('folder-display');
+    el.textContent = folder;
+    el.classList.remove('empty');
+    terminalLine(`Dossier sélectionné : ${folder}`, 'info');
+  }
+}
+
+// ── Type de scan ──────────────────────────────────────────────
+function selectType(el) {
+  document.querySelectorAll('.scan-type-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedType = el.dataset.type;
+}
+
+// ── Terminal ──────────────────────────────────────────────────
+function terminalLine(text, type = 'default') {
+  const term = document.getElementById('terminal');
+  const cursor = term.querySelector('.cursor');
+  if (cursor) cursor.remove();
+
+  const lines = text.split('\n');
+  lines.forEach(line => {
+    if (!line.trim()) return;
+    const span = document.createElement('span');
+    span.className = 'line ' + classify(line);
+    span.textContent = line;
+    term.appendChild(span);
+    term.appendChild(document.createElement('br'));
+  });
+
+  const cur = document.createElement('span');
+  cur.className = 'cursor';
+  term.appendChild(cur);
+  term.scrollTop = term.scrollHeight;
+}
+
+function classify(line) {
+  if (/INFECTE|INFECTED|FOUND|MENACE|DANGER/i.test(line)) return 'danger';
+  if (/CLEAN|STATUS:CLEAN|aucun.*(infect|détect)|sain/i.test(line)) return 'ok';
+  if (/WARN|SUSPECT|suspicious/i.test(line)) return 'warn';
+  if (/\[CLAM\]|\[VT\]|\[USB\]|===|──/i.test(line)) return 'info';
+  return 'default';
+}
+
+function clearTerminal() {
+  const term = document.getElementById('terminal');
+  term.innerHTML = '<span class="line default">Terminal effacé.</span><br><span class="cursor"></span>';
+}
+
+// ── Lancer le scan ────────────────────────────────────────────
+async function startScan() {
+  if (isScanning) return;
+  if (!selectedFolder) {
+    terminalLine('⚠ Veuillez d\'abord sélectionner un dossier.', 'warn');
+    return;
+  }
+
+  isScanning = true;
+  document.getElementById('btn-scan').disabled = true;
+  document.getElementById('result-banner').style.display = 'none';
+  document.getElementById('result-banner').className = '';
+  document.getElementById('progress-bar').classList.add('active');
+
+  const overlay = document.getElementById('scanning-overlay');
+  overlay.classList.add('active');
+
+  const typeLabel = { all: 'Scan complet', clam: 'ClamAV', VT: 'VirusTotal' }[selectedType];
+  document.getElementById('overlay-sub').textContent = typeLabel + ' — ' + selectedFolder;
+
+  terminalLine('');
+  terminalLine(`▶ Lancement : ${typeLabel}`, 'info');
+  terminalLine(`  Dossier : ${selectedFolder}`, 'info');
+  terminalLine('─'.repeat(50), 'info');
+
+  // Écouter la sortie en temps réel
+  window.api.onScanOutput((data) => {
+    terminalLine(data);
+    // Mise à jour overlay
+    const lines = data.split('\n').filter(l => l.trim());
+    if (lines.length > 0) {
+      document.getElementById('overlay-sub').textContent = lines[lines.length - 1].substring(0, 60);
+    }
+  });
+
+  const result = await window.api.startScan(selectedType, selectedFolder);
+  window.api.offScanOutput();
+
+  document.getElementById('progress-bar').classList.remove('active');
+  overlay.classList.remove('active');
+  isScanning = false;
+  document.getElementById('btn-scan').disabled = false;
+
+  // Bannière de résultat
+  const banner = document.getElementById('result-banner');
+  const combined = result.output + result.errorOutput;
+  if (result.code === 2 || /STATUS:ERROR/.test(combined)) {
+    banner.className = 'error';
+    banner.innerHTML = '⚠️ &nbsp;Erreur lors du scan. Vérifiez que ClamAV est installé.';
+  } else if (/STATUS:INFECTED|INFECTE|FOUND/.test(combined)) {
+    banner.className = 'infected';
+    banner.innerHTML = '🚨 &nbsp;MENACE DÉTECTÉE — Fichiers mis en quarantaine.';
+  } else {
+    banner.className = 'clean';
+    banner.innerHTML = '✅ &nbsp;Aucune menace détectée. Système sain.';
+  }
+  banner.style.display = 'flex';
+
+  terminalLine('─'.repeat(50), 'info');
+  terminalLine('Scan terminé.', 'info');
+}
+
+// ── Logs ──────────────────────────────────────────────────────
+async function loadLogs() {
+  const logs = await window.api.getLogs();
+  const list = document.getElementById('log-list');
+  const content = document.getElementById('log-content');
+  content.style.display = 'none';
+
+  if (!logs.length) {
+    list.innerHTML = '<div class="empty-state"><span class="empty-icon">📭</span>Aucun log disponible</div>';
+    return;
+  }
+
+  list.innerHTML = '';
+  logs.forEach(log => {
+    const d = new Date(log.date);
+    const item = document.createElement('div');
+    item.className = 'log-item';
+    const hasInfected = /INFECTE|INFECTED|FOUND/.test(log.content);
+    item.innerHTML = `
+      <span class="log-icon">${hasInfected ? '🔴' : '🟢'}</span>
+      <span class="log-name">${log.name}</span>
+      <span class="log-date">${d.toLocaleDateString('fr-FR')} ${d.toLocaleTimeString('fr-FR')}</span>
+    `;
+    item.onclick = () => {
+      content.style.display = 'block';
+      content.textContent = log.content;
+    };
+    list.appendChild(item);
+  });
+}
+
+// ── Quarantaine ───────────────────────────────────────────────
+async function loadQuarantine() {
+  const files = await window.api.getQuarantine();
+  const grid = document.getElementById('quarantine-grid');
+
+  if (!files.length) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><span class="empty-icon">✅</span>Quarantaine vide</div>';
+    return;
+  }
+
+  grid.innerHTML = '';
+  files.forEach(f => {
+    const kb = (f.size / 1024).toFixed(1);
+    const d = new Date(f.date).toLocaleDateString('fr-FR');
+    const item = document.createElement('div');
+    item.className = 'quarantine-item';
+    item.innerHTML = `
+      <div class="q-icon">☣️</div>
+      <div class="q-name">${f.name}</div>
+      <div class="q-meta">${kb} Ko — ${d}</div>
+    `;
+    grid.appendChild(item);
+  });
+}
+</script>
+</body>
+</html>
