@@ -9,7 +9,8 @@ Ce projet implémente cette logique avec deux moteurs d'analyse complémentaires
 
 - **ClamAV** — antivirus open source qui tourne en local. Rapide, pas besoin d'internet, détecte les signatures connues.
 - **VirusTotal** — service cloud qui compare le hash SHA256 de chaque fichier contre une base de données de plus de 70 antivirus. Beaucoup plus puissant, mais nécessite une connexion internet et une clé API.
-Cette méthode garantit que vos fichiers ne fuient pas et **restent en local **sur votre machine.
+
+Cette méthode garantit que vos fichiers ne fuient pas et **restent en local ** sur votre machine.
 
 Quand un fichier est détecté comme infecté, il est automatiquement déplacé en **quarantaine** et un log est généré avec le détail du scan.
 
@@ -38,7 +39,7 @@ Ce script installe automatiquement :
 Avant de lancer l'outil, il faut renseigner ta clé API VirusTotal :
 
 ```bash
-nano config/.env
+nvim config/.env
 ```
 Dans le fichier, remplis la ligne :
 ```
@@ -88,7 +89,7 @@ Si tu préfères rester dans le terminal, tu peux utiliser directement `main.sh`
 Par défaut, la détection USB est désactivée pour faciliter les tests. Pour l'activer, ouvre le fichier `scripts/usb_watch.sh` et **décommente** le bloc de code (enlève les `#` devant chaque ligne du bloc) :
 
 ```bash
-nano scripts/usb_watch.sh
+nvim scripts/usb_watch.sh
 ```
 
 Ensuite, lance le watcher en arrière-plan avant de démarrer l'outil :
